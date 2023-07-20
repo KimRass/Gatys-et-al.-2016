@@ -55,8 +55,8 @@ $$L(\vec{x}, \vec{c}, \vec{s}) = \lambda L_{content}(\vec{x}, \vec{c}) + L_{styl
 # Implementation from Scratch
 ## Samples (0.002)
 - Content image
-    - <img src="https://github.com/flitto/image_processing_server/assets/105417680/f495ffa7-6127-4be1-a30f-be0cd8f4c1c3" width="600">
+    - <img src="https://github.com/KimRass/image_style_transfer_from_scratch/assets/67457712/637040bd-b7c5-47e4-830d-deffa96454cc" width="600">
 - Style image
-    - <img src="https://github.com/flitto/image_processing_server/assets/105417680/68160b7e-9bff-467a-9b3b-7574338e7e1b" width="600">
+    - <img src="https://github.com/KimRass/image_style_transfer_from_scratch/assets/67457712/dd398f2b-5215-4607-92af-bb6056f93041" width="600">
 - Generated image
-    - <img src="https://github.com/flitto/image_processing_server/assets/105417680/9eb385b5-30ba-45f8-afb7-4af953e141bb" width="600">
+    - <img src="https://github.com/KimRass/image_style_transfer_from_scratch/assets/67457712/d28e7c7a-e02f-4907-aa2b-b11d0932b9d2" width="600">
