@@ -21,10 +21,6 @@
     - The total loss $L_{total}$ is then a linear combination between the content and the style loss. Its derivative with respect to the pixel values can be computed using error back-propagation (middle). ***This gradient is used to iteratively update the image*** $\vec{x}$ ***until it simultaneously matches the style features of the style image*** $\vec{s}$ ***and the content features of the content image*** $\vec{c}$ ***(middle, bottom).***
     - ***We jointly minimise the distance of the fea- ture representations of a white noise image from the content representation of the photograph in one layer and the style representation of the painting defined on a number of layers of the Convolutional Neural Network.***
 - The key finding of this paper is that the representations of content and style in the Convolutional Neural Network are well separable.
-- Figure 5
-    - <img src="https://user-images.githubusercontent.com/67457712/226240563-b39b3987-d9aa-40cd-bf5b-018e056c69cb.png" width="500">
-    - ***When matching the content on a lower layer of the network, the algorithm matches much of the detailed pixel information.***
-    - ***In contrast, when matching the content features on a higher layer of the network, detailed pixel information of the photograph is not as strongly constraint. That is, the fine structure of the image, for example the edges and color map, is altered such that it agrees with the style of the artwork while displaying the content of the photograph.***
 - Image initialization
     - We have initialized all images shown so far with white noise. However, one could also initialize the image synthesis with either the content image or the style image. Although they bias the final image somewhat towards the spatial structure of the initialization, ***the different initializations do not seem to have a strong effect on the outcome of the synthesis procedure. It should be noted that only initializing with noise allows to generate an arbitrary number of new images. Initializing with a fixed image always deterministically leads to the same outcome (up to stochasticity in the gradient descent procedure).***
 ## Architecture
