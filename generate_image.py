@@ -5,22 +5,95 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
+import torchvision.transforms as T
+from torch.optim import LBFGS
 from torchvision.models import vgg19_bn, VGG19_BN_Weights
 import numpy as np
 from pathlib import Path
+import argparse
 
-from utils import get_args
-from image_utils import load_image, save_image, downsample, get_white_noise
-from torch_utils import (
+from utils import (
+    get_device,
+    load_image,
+    save_image,
+    downsample,
+    get_white_noise,
     tensor_to_array,
     print_all_layers,
-    FeatureMapExtractor,
-    get_content_image_transformer,
-    get_style_image_transformer,
+    # FeatureMapExtractor,
+    # get_content_image_transformer,
+    # get_style_image_transformer,
 )
 
 # "We normalized the network by scaling the weights such that the mean activation of each convolutional filter over images and positions is equal to one. Such re-scaling can be done for the VGG network without changing its output, because it contains only rectifying linear activation functions and no normalization or pooling over feature maps. We do not use any of the fully connected layers."
+
+
+def get_args():
+    parser = argparse.ArgumentParser(description="Image Style Transfer")
+
+    parser.add_argument("--content_image")
+    parser.add_argument("--style_image")
+    parser.add_argument("--save_dir", default="samples")
+    parser.add_argument("--style_weight", type=int, default=1000)
+
+    args = parser.parse_args()
+    return args
+
+
+def _get_target_layer(layer):
+    return eval(
+        "model" + "".join(
+            [f"""[{i}]""" if i.isdigit() else f""".{i}""" for i in layer.split(".")]
+        )
+    )
+
+
+class FeatureMapExtractor():
+    def __init__(self, model):
+        self.model = model
+
+        self.feat_map = None
+
+    def get_feature_map(self, image, layer):
+        def forward_hook_fn(module, input, output):
+            self.feat_map = output
+
+        trg_layer = _get_target_layer(layer)
+        trg_layer.register_forward_hook(forward_hook_fn)
+
+        self.model(image)
+        return self.feat_map
+
+
+def get_content_image_transformer():
+    style_transform = T.Compose(
+        [
+            T.ToTensor(),
+            # T.CenterCrop(224),
+            T.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            )
+        ]
+    )
+    return style_transform
+
+
+# "To extract image information on comparable scales, we always resized the style image
+# to the same size as the content image before computing its feature representations."
+def get_style_image_transformer(content_img):
+    h, w, _ = content_img.shape
+    style_transform = T.Compose(
+        [
+            T.ToTensor(),
+            T.Resize((h, w)),
+            T.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            )
+        ]
+    )
+    return style_transform
 
 
 class ContentLoss(nn.Module):
@@ -92,15 +165,15 @@ class TotalLoss(nn.Module):
         # in layers 'conv1_1', 'conv2_1', 'conv3_1', 'conv4_1' and 'conv5_1'."
         style_weights=(0.2, 0.2, 0.2, 0.2, 0.2),
         style_layers=("features.0", "features.7", "features.14", "features.27", "features.40"),
-        lamb=1 * 1e-2, # "$Reciprocal of \frac{\alpha}{\beta}$" ($\lambda$)
+        # lamb=1 * 1e-2, # "$Reciprocal of \frac{\alpha}{\beta}$" ($\lambda$)
+        alpha=1e1,
+        beta=1e4,
     ):
         super().__init__()
 
-        self.model = model
-        self.content_layer = content_layer
-        self.style_weights = style_weights
-        self.style_layers = style_layers
-        self.lamb = lamb
+        # self.lamb = lamb
+        self.alpha = alpha
+        self.beta = beta
 
         self.content_loss = ContentLoss(model=model, layer=content_layer)
         self.style_loss = StyleLoss(model=model, weights=style_weights, layers=style_layers)
@@ -113,7 +186,8 @@ class TotalLoss(nn.Module):
 
         x1 = self.content_loss(gen_image)
         x2 = self.style_loss(gen_image)
-        x = self.lamb * x1 + x2
+        # x = self.lamb * x1 + x2
+        x = self.alpha * x1 + self.beta * x2
         return x
 
 
@@ -134,42 +208,54 @@ def prepare_images(args):
 if __name__ == "__main__":
     args = get_args()
 
+    DEVICE = get_device()
+
     content_image, style_image, gen_image = prepare_images(args)
 
-    cuda = torch.cuda.is_available()
-    if cuda:
-        content_image = content_image.cuda()
-        style_image = style_image.cuda()
-        gen_image = gen_image.cuda()
-    # temp = tensor_to_array(gen_image)
-    # show_image(temp)
+    content_image = content_image.to(DEVICE)
+    style_image = style_image.to(DEVICE)
+    gen_image = gen_image.to(DEVICE)
 
     # "We used the feature space provided by a normalised version of the 16 convolutional and 5 pooling layers
     # of the 19-layer VGG network."
     # Max Pooling을 그대로 사용하겠습니다. ("For image synthesis we found that replacing the maximum pooling operation by average pooling yields slightly more appealing results, which is why the images shown were generated with average pooling.")
-    model = vgg19_bn(weights=VGG19_BN_Weights.IMAGENET1K_V1)
+    model = vgg19_bn(weights=VGG19_BN_Weights.IMAGENET1K_V1).to(DEVICE)
     model.eval()
-    if cuda:
-        model = model.cuda()
 
-    feat_map_extractor = FeatureMapExtractor(model)
+    mse_crit = nn.MSELoss()
+
+    content_layer = "features.40"
+    extractor = FeatureMapExtractor(model)
+    content_feat_map = extractor.get_feature_map(image=content_image, layer=content_layer)
+    gen_feat_map = extractor.get_feature_map(image=gen_image, layer=content_layer)
+    # "$L_{content}(\vec{x}, \vec{c}, l) = \frac{1}{2}\sum_{i, j}\big(F^{l}_{x, ij} - F^{l}_{c, ij}\big)^{2}$"
+    mse_loss = 0.5 * mse_crit(gen_feat_map, content_feat_map)
+
+    style_weights = (0.2, 0.2, 0.2, 0.2, 0.2)
+    style_layers = ("features.0", "features.7", "features.14", "features.27", "features.40")
+    style_feat_maps = [
+        extractor.get_feature_map(image=style_image, layer=style_layer)
+        for style_layer in style_layers
+    ]
+
+
+
 
     gen_image.requires_grad_()
-    # Adam을 사용하겠습니다. ("Here we use L-BFGS [32], which we found to work best for image synthesis.")
-    optimizer = optim.Adam(params=[gen_image], lr=0.03)
-    # optimizer = optim.LBFGS(params=[gen_image])
+    # "Here we use L-BFGS [32], which we found to work best for image synthesis."
+    optim = LBFGS(params=[gen_image])
 
-    criterion = TotalLoss(model=model, lamb=args.style_weight)
+    crit = TotalLoss(model=model, lamb=args.style_weight)
 
     n_epochs = 30_000
     for epoch in range(1, n_epochs + 1):
-        optimizer.zero_grad()
+        optim.zero_grad()
 
-        loss = criterion(gen_image)
+        loss = crit(gen_image)
 
         loss.backward()
 
-        optimizer.step()
+        optim.step()
         if epoch % 200 == 0:
             print(f"""| Epoch: {epoch:5d} | Loss: {loss.item(): .2f} |""")
 
