@@ -1,11 +1,12 @@
 import torch
-import torch.nn as nn
 import torchvision.transforms.functional as TF
+from torchvision.utils import make_grid
 from PIL import Image
 import cv2
 import requests
 from io import BytesIO
 from pathlib import Path
+from copy import copy
 
 import config
 
@@ -67,7 +68,7 @@ def norm_feat_map(feat_map):
     return feat_map / feat_map.sum(dim=(2, 3)).unsqueeze(2).unsqueeze(2)
 
 
-class FeatureMapExtractor():
+class FeatMapExtractor():
     def __init__(self, model, layer_nums):
 
         self.model = model
@@ -75,7 +76,7 @@ class FeatureMapExtractor():
         self.feat_maps = dict()
 
         for layer_num in layer_nums:
-            model.features[layer_num].register_forward_hook(self.get_feat_map(layer_num))
+            self.model.features[layer_num].register_forward_hook(self.get_feat_map(layer_num))
 
     def get_feat_map(self, layer_num):
         def forward_hook_fn(model, input, output):
@@ -85,7 +86,7 @@ class FeatureMapExtractor():
 
     def __call__(self, image):
         self.model(image)
-        return self.feat_maps
+        return copy(self.feat_maps)
 
 
 def resize(image, img_size):
@@ -99,3 +100,13 @@ def resize(image, img_size):
         return new_image
     else:
         return image
+
+
+def images_to_grid(content_image, style_image, gen_image):
+    gen_image = gen_image.detach().cpu()
+    image = torch.cat([content_image, style_image, gen_image], dim=0)
+    image = denorm(image, mean=config.MEAN, std=config.STD)
+    grid = make_grid(image, nrow=3, padding=2, pad_value=1)
+    grid.clip_(0, 1)
+    grid = TF.to_pil_image(grid)
+    return grid

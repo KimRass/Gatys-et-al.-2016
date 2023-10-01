@@ -1,16 +1,7 @@
-# Image-Style-Transfer
+# Gatys-et-al.
 - Gatys et al. (2016) implementation from scratch in PyTorch
 ## Paper Reading
-- [Image Style Transfer Using Convolutional Neural Networks](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/Gatys_Image_Style_Transfer_CVPR_2016_paper.pdf)
-### Loss
-- Content loss
-    $$L_{content}(\vec{x}, \vec{c}, l) = \frac{1}{2}\sum_{i, j}\big(F^{l}_{x, ij} - F^{l}_{c, ij}\big)^{2}$$
-    - Thus we can change the initially random image $\vec{x}$ until it generates the same response in a certain layer of the Convolutional Neural Network as the content image $\vec{c}$.
-- Style loss
-    $$G^{l}_{ij} = \sum_{k}F^{l}_{ik}F^{l}_{jk}$$
-    $$E_{l} = \frac{1}{4N_{l}^{2}M_{l}^{2}} \sum_{i, j}\big(G^{l}_{x, ij} - G^{l}_{s, ij}\big)^{2}$$
-    $$L_{style}(\vec{x}, \vec{s}) = \sum_{l = 0}^{L}w_{l}E_{l}$$
-$$L(\vec{x}, \vec{c}, \vec{s}) = \lambda L_{content}(\vec{x}, \vec{c}) + L_{style}(\vec{x}, \vec{s})$$
+- [Image Style Transfer Using Convolutional Neural Networks](https://github.com/KimRass/Gatys-et-al./blob/main/image_style_transfer_using_convolutional_neural_networks.pdf)
 ### References
 - [28] [Very Deep Convolutional Networks for Large-Scale Image Recognition](https://arxiv.org/pdf/1409.1556.pdf)
 ## Research

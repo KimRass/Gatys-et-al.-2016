@@ -1,7 +1,3 @@
-import sys
-
-sys.path.insert(0, "/Users/jongbeomkim/Desktop/workspace/Image-Style-Transfer")
-
 # "The images were synthesised by matching the content representation on layer 'conv4_2' and the style
 # representation on layers 'conv1_1', 'conv2_1', 'conv3_1', 'conv4_1' and 'conv5_1'."
 CONTENT_LAYER_NUMS = (21,)
@@ -15,5 +11,5 @@ assert sum(STYLE_WEIGHTS) == 1, "`sum(STYLE_LAYERS_NUMS)` should be equal to 1"
 MEAN = (0.485, 0.456, 0.406)
 STD = [0.229, 0.224, 0.225]
 LR = 1
-N_EPOCHS = 100
+N_EPOCHS = 150
 FROM_CONTENT_IMAGE = True
