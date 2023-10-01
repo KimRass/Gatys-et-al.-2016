@@ -1,53 +1,41 @@
-# Paper Reading
+# Image-Style-Transfer
+- Gatys et al. (2016) implementation from scratch in PyTorch
+## Paper Reading
 - [Image Style Transfer Using Convolutional Neural Networks](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/Gatys_Image_Style_Transfer_CVPR_2016_paper.pdf)
-- 원본 논문의 수식과 다른 표기를 사용합니다:
-    - $\vec{a}\rightarrow\vec{s}$, $\vec{p} \rightarrow \vec{c}$, $A \rightarrow G_{s}$, $P \rightarrow F_{c}$ and $\frac{\alpha}{\beta} \rightarrow \lambda$
-## Methodology
-- Figure 1
-    - <img src="https://user-images.githubusercontent.com/67457712/226185150-e19f3a4e-457f-4534-94f6-1a080b56528b.png" width="800">
-    - While the number of different filters increases along the processing hierarchy, the size of the filtered images is reduced by some downsampling mechanism (e.g. max-pooling) leading to a decrease in the total number of units per layer of the network.
-    - Content Reconstructions
-        - We can visualise the information at different processing stages in the CNN by reconstructing the input image from only knowing the network's responses in a particular layer. We reconstruct the input image from from layers 'conv1_2' (a), 'conv2_2' (b), 'conv3_2' (c), 'conv4_2' (d) and 'conv5_2' (e) of the original VGG-Network.
-        - (a ~ c) Reconstructions from the lower layers simply reproduce the exact pixel values of the original image.
-        - (d ~ e) In contrast, higher layers in the network capture the high-level content in terms of objects and their arrangement in the input image but do not constrain the exact pixel values of the reconstruction very much. We therefore refer to the feature responses in higher layers of the network as the content representation.
-    - Style Reconstructions
-        - The style representation computes correlations between the different features in different layers of the CNN. We reconstruct the style of the input image from a style representation built on different subsets of CNN layers ('conv1_1' (a), 'conv1_1' and 'conv2_1' (b), 'conv1_1', 'conv2_1' and 'conv3_1' (c), 'conv1_1', 'conv2_1', 'conv3_1' and 'conv4_1' (d), 'conv1_1', 'conv2_1', 'conv3_1', 'conv4_1' and 'conv5_1' (e)). This creates images that match the style of a given image on an increasing scale while discarding information of the global arrangement of the scene.
-        - We can visualise the information captured by these style feature spaces built on different layers of the network by constructing an image that matches the style representation of a given input image.
-    - ***We find that matching the style representations up to higher layers in the network preserves local images structures an increasingly large scale, leading to a smoother and more continuous visual experience.*** Thus, the visually most appealing images are usually created by matching the style representation up to high layers in the network, which is why for all images shown we match the style features in layers 'conv1_1', 'conv2_1', 'conv3_1', 'conv4_1' and 'conv5_1' of the network.
-- Figure 2
-    - <img src="https://user-images.githubusercontent.com/67457712/226184028-5db9cb50-fae1-459d-8ad6-25597e60eedc.png" width="800">
-    - First content and style features are extracted and stored. ***The style image*** $\vec{s}$ ***is passed through the network and its style representation*** $G^{l}_{s}$ ***on all layers included are computed and stored (left). The content image*** $\vec{c}$ ***is passed through the network and the content representation*** $F^{l}_{c}$ ***in one layer is stored (right).***
-    - ***Then a random white noise image*** $\vec{x}$ ***is passed through the network and its style features*** $G^{l}_{x}$ ***and content features*** $F^{l}_{x}$ ***are computed. On each layer included in the style representation, the element-wise mean squared difference between*** $G^{l}_{x}$ ***and*** $G^{l}_{c}$ ***is computed to give the style loss*** $L_{style}$ ***(left). Also the mean squared difference between*** $F^{l}_{x}$ ***and*** $F^{l}_{c}$ ***is computed to give the content loss*** $L_{content}$ ***(right).***
-    - The total loss $L_{total}$ is then a linear combination between the content and the style loss. Its derivative with respect to the pixel values can be computed using error back-propagation (middle). ***This gradient is used to iteratively update the image*** $\vec{x}$ ***until it simultaneously matches the style features of the style image*** $\vec{s}$ ***and the content features of the content image*** $\vec{c}$ ***(middle, bottom).***
-    - ***We jointly minimise the distance of the fea- ture representations of a white noise image from the content representation of the photograph in one layer and the style representation of the painting defined on a number of layers of the Convolutional Neural Network.***
-- The key finding of this paper is that the representations of content and style in the Convolutional Neural Network are well separable.
-- Image initialization
-    - We have initialized all images shown so far with white noise. However, one could also initialize the image synthesis with either the content image or the style image. Although they bias the final image somewhat towards the spatial structure of the initialization, ***the different initializations do not seem to have a strong effect on the outcome of the synthesis procedure. It should be noted that only initializing with noise allows to generate an arbitrary number of new images. Initializing with a fixed image always deterministically leads to the same outcome (up to stochasticity in the gradient descent procedure).***
-## Architecture
-- ***We used the feature space provided by a normalized version of the 16 convolutional and 5 pooling layers of the 19-layer VGG network. We normalized the network by scaling the weights such that the mean activation of each convolutional filter over images and positions is equal to one. Such re-scaling can be done for the VGG network without changing its output, because it contains only rectifying linear activation functions and no normalization or pooling over feature maps. We do not use any of the fully connected layers. For image synthesis we found that replacing the maximum pooling operation by average pooling yields slightly more appealing results.***
-## Inference
 ### Loss
 - Content loss
-    - A layer with $N_{l}$ distinct filters has $N_{l}$ feature maps each of size $M_{l}$, where $M_{l}$ is the height times the width of the feature map.
-    - So the responses (Comment: i.e., outputs) in a layer $l$ can be stored in a matrix $F^{l} \in \mathbb{R}^{N_{l} \times M_{l}}$ where $F^{l}_{ij}$ is the activation of the $i$ th filter at position $j$ in layer $l$. Let $\vec{x}$ and $\vec{c}$ be the image to be generated and the content image, and $F^{l}_{x}$ and $F^{l}_{c}$ their respective feature representation in layer $l$. We then define the squared-error loss between the two feature representations
     $$L_{content}(\vec{x}, \vec{c}, l) = \frac{1}{2}\sum_{i, j}\big(F^{l}_{x, ij} - F^{l}_{c, ij}\big)^{2}$$
     - Thus we can change the initially random image $\vec{x}$ until it generates the same response in a certain layer of the Convolutional Neural Network as the content image $\vec{c}$.
 - Style loss
-    - The feature space can be built on top of the filter responses in any layer of the network. It consists of the correlations between the different filter responses, where the expectation is taken over the spatial extent of the feature maps. These feature correlations are given by the Gram matrix $G^{l} \in \mathbb{R}^{N_{l} \times N_{l}}$, where $G^{l}_{ij}$ is the inner product between the vectorized feature maps $i$ and $j$ in layer $l$
     $$G^{l}_{ij} = \sum_{k}F^{l}_{ik}F^{l}_{jk}$$
-    - By including the feature correlations of multiple layers, we obtain a stationary, multi-scale representation of the input image, which captures its texture information but not the global arrangement. This is done by using gradient descent from a white noise image to minimize the mean-squared distance between the entries of the Gram matrices from the style image and the Gram matrices of the image to be generated.
-    - Let $\vec{x}$ be $\vec{s}$ the image to be generated and the style image, and $G^{l}_{x}$ and $G^{l}_{s}$ their respective style representation in layer $l$. The contribution of layer $l$ to the total loss is then
     $$E_{l} = \frac{1}{4N_{l}^{2}M_{l}^{2}} \sum_{i, j}\big(G^{l}_{x, ij} - G^{l}_{s, ij}\big)^{2}$$
-    - and the total style loss is
     $$L_{style}(\vec{x}, \vec{s}) = \sum_{l = 0}^{L}w_{l}E_{l}$$
-    - where $w_{l}$ are weighting factors of the contribution of each layer to the total loss. $w_{l} = \frac{1}{5}$ in layers 'conv1_1', 'conv2_1', 'conv3_1', 'conv4_1' and 'conv5_1', $w_{l} = 0$ in all other layers.
-- ***The loss function we minimize is***
 $$L(\vec{x}, \vec{c}, \vec{s}) = \lambda L_{content}(\vec{x}, \vec{c}) + L_{style}(\vec{x}, \vec{s})$$
-- where $\alpha$ and $\beta$ are the weighting factors for content and style reconstruction, respectively.
-- ***To extract image information on comparable scales, we always resized the style image to the same size as the content image before computing its feature representations.***
-## References
+### References
 - [28] [Very Deep Convolutional Networks for Large-Scale Image Recognition](https://arxiv.org/pdf/1409.1556.pdf)
+## Research
+### Model
+- `from torchvision.models.vgg19_bn`을 사용하면 아래 이미지처럼 Style transfering이 제대로 일어나지 않습니다. `from torchvision.models.vgg19`을 사용하면 제대로 된 이미지가 생성되는 것을 확인할 수 있습니다.
+    - <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/b6141441-89b7-4878-b058-c112c96af038" width="300">
+- VGG19:
+    - conv1_1: 0 ~ 1
+    - conv1_2: 2 ~ 4
+    - conv2_1: 5 ~ 6
+    - conv2_2: 7 ~ 9
+    - conv3_1: 10 ~ 11
+    - conv3_2: 12 ~ 13
+    - conv3_3: 14 ~ 15
+    - conv3_4: 16 ~ 18
+    - conv4_1: 19 ~ 20
+    - conv4_2: 21 ~ 22
+    - conv4_3: 23 ~ 24
+    - conv4_4: 25 ~ 27
+    - conv5_1: 28 ~ 29
+    - conv5_2: 30 ~ 31
+    - conv5_3: 32 ~ 33
+    - conv5_4: 34 ~ 36
 
+<!-- 
 # Implementation from Scratch
 ## Samples (0.002)
 - Content image
@@ -55,4 +43,4 @@ $$L(\vec{x}, \vec{c}, \vec{s}) = \lambda L_{content}(\vec{x}, \vec{c}) + L_{styl
 - Style image
     - <img src="https://github.com/KimRass/image_style_transfer_from_scratch/assets/67457712/dd398f2b-5215-4607-92af-bb6056f93041" width="600">
 - Generated image
-    - <img src="https://github.com/KimRass/image_style_transfer_from_scratch/assets/67457712/d28e7c7a-e02f-4907-aa2b-b11d0932b9d2" width="600">
+    - <img src="https://github.com/KimRass/image_style_transfer_from_scratch/assets/67457712/d28e7c7a-e02f-4907-aa2b-b11d0932b9d2" width="600"> -->

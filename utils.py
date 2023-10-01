@@ -1,10 +1,13 @@
 import torch
 import torch.nn as nn
-import torchvision.transforms as T
-import numpy as np
-import requests
+import torchvision.transforms.functional as TF
+from PIL import Image
 import cv2
+import requests
+from io import BytesIO
 from pathlib import Path
+
+import config
 
 
 def get_device():
@@ -15,114 +18,84 @@ def get_device():
     return device
 
 
-def load_image(url_or_path=""):
+def load_image(url_or_path):
     url_or_path = str(url_or_path)
-
     if "http" in url_or_path:
-        img_arr = np.asarray(bytearray(requests.get(url_or_path).content), dtype="uint8")
-        img = cv2.imdecode(img_arr, flags=cv2.IMREAD_COLOR)
-        img = cv2.cvtColor(src=img, code=cv2.COLOR_BGR2RGB)
+        response = requests.get(url_or_path)
+        image = Image.open(BytesIO(response.content)).convert("RGB")
     else:
-        img = cv2.imread(url_or_path, flags=cv2.IMREAD_COLOR)
-        img = cv2.cvtColor(src=img, code=cv2.COLOR_BGR2RGB)
-    return img
+        image = Image.open(url_or_path).convert("RGB")
+    return image
 
 
 def downsample(img):
     return cv2.pyrDown(img)
 
 
-def save_image(img, path) -> None:
+def _to_pil(img):
+    if not isinstance(img, Image.Image):
+        img = Image.fromarray(img)
+    return img
+
+
+def save_image(image, path):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-
-    cv2.imwrite(
-        filename=str(path), img=img[:, :, :: -1], params=[cv2.IMWRITE_JPEG_QUALITY, 100]
-    )
+    _to_pil(image).save(str(path), quality=100)
 
 
-def get_white_noise(content_img):
+def get_white_noise(content_image):
     # "We jointly minimise the distance of the feature representations of a white noise image
     # from the content representation of the photograph in one layer and the style representation
     # of the painting defined on a number of layers of the Convolutional Neural Network."
-    return np.random.randint(low=0, high=256, size=content_img.shape, dtype="uint8")
+    noise = torch.randn_like(content_image)
+    noise = TF.normalize(noise, mean=config.MEAN, std=config.STD)
+    return noise
 
 
-def print_all_layers(model):
-    for name, module in model.named_modules():
-        if isinstance(
-            module,
-            (nn.Linear, nn.Conv2d, nn.MaxPool2d, nn.AdaptiveMaxPool2d, nn.ReLU)
-        ):
-            print(f"""| {name:20s}: {str(type(module)):50s} |""")
+def denorm(tensor, mean, std):
+    tensor *= torch.Tensor(std)[None, :, None, None]
+    tensor += torch.Tensor(mean)[None, :, None, None]
+    return tensor
 
 
-def _denormalize(img, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
-    copied_img = img.copy()
-    copied_img *= std
-    copied_img += mean
-    copied_img *= 255.0
-    copied_img = np.clip(a=copied_img, a_min=0, a_max=255).astype("uint8")
-    return copied_img
+def norm_feat_map(feat_map):
+    # "We normalized the network by scaling the weights such that the mean activation of each convolutional filter
+    # over images and positions is equal to one. Such re-scaling can be done for the VGG network without changing
+    # its output, because it contains only rectifying linear activation functions and no normalization or pooling
+    # over feature maps. We do not use any of the fully connected layers."
+    return feat_map / feat_map.sum(dim=(2, 3)).unsqueeze(2).unsqueeze(2)
 
 
-def tensor_to_array(tensor):
-    copied_tensor = tensor.clone().squeeze().permute((1, 2, 0)).detach().cpu().numpy()
-    copied_tensor = _denormalize(copied_tensor)
-    return copied_tensor
+class FeatureMapExtractor():
+    def __init__(self, model, layer_nums):
+
+        self.model = model
+
+        self.feat_maps = dict()
+
+        for layer_num in layer_nums:
+            model.features[layer_num].register_forward_hook(self.get_feat_map(layer_num))
+
+    def get_feat_map(self, layer_num):
+        def forward_hook_fn(model, input, output):
+            self.feat_maps[layer_num] = output
+            # self.feat_maps[layer_num] = norm_feat_map(output)
+        return forward_hook_fn
+
+    def __call__(self, image):
+        self.model(image)
+        return self.feat_maps
 
 
-# def _get_target_layer(layer):
-#     return eval(
-#         "model" + "".join(
-#             [f"""[{i}]""" if i.isdigit() else f""".{i}""" for i in layer.split(".")]
-#         )
-#     )
-
-
-# class FeatureMapExtractor():
-#     def __init__(self, model):
-#         self.model = model
-
-#         self.feat_map = None
-
-#     def get_feature_map(self, image, layer):
-#         def forward_hook_fn(module, input, output):
-#             self.feat_map = output
-
-#         trg_layer = _get_target_layer(layer)
-#         trg_layer.register_forward_hook(forward_hook_fn)
-
-#         self.model(image)
-#         return self.feat_map
-
-
-# def get_content_image_transformer():
-#     style_transform = T.Compose(
-#         [
-#             T.ToTensor(),
-#             # T.CenterCrop(224),
-#             T.Normalize(
-#                 mean=[0.485, 0.456, 0.406],
-#                 std=[0.229, 0.224, 0.225]
-#             )
-#         ]
-#     )
-#     return style_transform
-
-
-# # "To extract image information on comparable scales, we always resized the style image
-# # to the same size as the content image before computing its feature representations."
-# def get_style_image_transformer(content_img):
-#     h, w, _ = content_img.shape
-#     style_transform = T.Compose(
-#         [
-#             T.ToTensor(),
-#             T.Resize((h, w)),
-#             T.Normalize(
-#                 mean=[0.485, 0.456, 0.406],
-#                 std=[0.229, 0.224, 0.225]
-#             )
-#         ]
-#     )
-#     return style_transform
+def resize(image, img_size):
+    ori_w, ori_h = image.size
+    if min(ori_w, ori_h) > img_size:
+        if ori_w >= ori_h:
+            w, h = round(ori_w * (img_size / ori_h)), img_size
+        else:
+            w, h = img_size, round(ori_h * (img_size / ori_w))
+        new_image = image.resize(size=(w, h), )
+        return new_image
+    else:
+        return image
