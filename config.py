@@ -10,6 +10,12 @@ assert len(STYLE_LAYERS_NUMS) == len(STYLE_WEIGHTS),\
 assert sum(STYLE_WEIGHTS) == 1, "`sum(STYLE_LAYERS_NUMS)` should be equal to 1"
 MEAN = (0.485, 0.456, 0.406)
 STD = [0.229, 0.224, 0.225]
-LR = 1
-N_EPOCHS = 150
+IMG_SIZE = 224
+N_EPOCHS = 300
 FROM_CONTENT_IMAGE = True
+
+### Adam optimizer
+LR = 0.08
+BETA1 = 0.99
+BETA2 = 0.999
+EPS = 0.1

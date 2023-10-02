@@ -12,7 +12,6 @@ from torch.optim import Adam
 from torchvision.models import vgg19, VGG19_Weights
 from pathlib import Path
 import argparse
-from copy import deepcopy
 from tqdm import tqdm
 import ssl
 
@@ -24,7 +23,6 @@ from utils import (
     resize,
     get_white_noise,
     FeatMapExtractor,
-    denorm,
     images_to_grid
 )
 
@@ -37,7 +35,7 @@ def get_args():
     parser.add_argument("--content_img", required=True)
     parser.add_argument("--style_img", required=True)
     parser.add_argument("--save_dir", type=str, required=True)
-    parser.add_argument("--img_size", type=int, required=True)
+    # parser.add_argument("--img_size", type=int, required=True)
     parser.add_argument("--alpha", type=int, required=False, default=1)
     parser.add_argument("--beta", type=int, required=False, default=1e8)
 
@@ -46,14 +44,16 @@ def get_args():
 
 
 def get_images(args):
-    content_image = load_image(args.content_img)
-    style_image = load_image(args.style_img)
+    ori_content_image = load_image(args.content_img)
+    content_image = resize(ori_content_image, img_size=config.IMG_SIZE)
 
-    content_image = resize(content_image, img_size=args.img_size)
+    ori_content_image = TF.to_tensor(ori_content_image)
+    ori_content_image = TF.normalize(ori_content_image, mean=config.MEAN, std=config.STD)
 
     content_image = TF.to_tensor(content_image)
     content_image = TF.normalize(content_image, mean=config.MEAN, std=config.STD)
 
+    style_image = load_image(args.style_img)
     style_image = TF.to_tensor(style_image)
     # "To extract image information on comparable scales, we always resized the style image
     # to the same size as the content image before computing its feature representations."
@@ -66,6 +66,7 @@ def get_images(args):
     else:
         gen_image = get_white_noise(content_image)
 
+    ori_content_image = ori_content_image.unsqueeze(0)
     content_image = content_image.unsqueeze(0)
     style_image = style_image.unsqueeze(0)
     gen_image = gen_image.unsqueeze(0)
@@ -75,7 +76,7 @@ def get_images(args):
     content_image = content_image.to(DEVICE)
     style_image = style_image.to(DEVICE)
     gen_image = gen_image.to(DEVICE)
-    return content_image, style_image, gen_image
+    return ori_content_image, content_image, style_image, gen_image
 
 
 def _get_gram_mat(feat_map):
@@ -154,7 +155,7 @@ if __name__ == "__main__":
     freeze_model(model)
     model.eval()
 
-    content_image, style_image, gen_image = get_images(args)
+    ori_content_image, content_image, style_image, gen_image = get_images(args)
 
     exctractor = FeatMapExtractor(model=model, layer_nums=config.LAYER_NUMS)
     content_feat_maps = exctractor(content_image)
@@ -162,7 +163,7 @@ if __name__ == "__main__":
 
     # "Here we use L-BFGS, which we found to work best for image synthesis."
     # 논문에서와 다르게 Adam optimizer를 사용하겠습니다. 학습 속도에 있어서 이쪽이 훨씬 빠른 것 같습니다.
-    optim = Adam([gen_image], lr=config.LR)
+    optim = Adam([gen_image], lr=config.LR, betas=(config.BETA1, config.BETA2), eps=config.EPS)
 
     if DEVICE.type == "cuda":
         scaler = GradScaler()
@@ -186,14 +187,11 @@ if __name__ == "__main__":
             optim.zero_grad()
             tot_loss.backward()
             optim.step()
-        # gen_image.clip(0, 1)
 
-    # grid = gen_image.detach().cpu()
-    # grid = denorm(grid, mean=config.MEAN, std=config.STD)
-    # print(grid.min(), grid.max())
-    # grid.clip_(0, 1)
-    # grid = TF.to_pil_image(grid.squeeze())
-    grid = images_to_grid(content_image=content_image, style_image=style_image, gen_image=gen_image)
+    _, _, ori_h, ori_w = ori_content_image.shape
+    style_image = TF.resize(style_image, size=(ori_h, ori_w), antialias=True)
+    gen_image = TF.resize(gen_image, size=(ori_h, ori_w), antialias=True)
+    grid = images_to_grid(content_image=ori_content_image, style_image=style_image, gen_image=gen_image)
     save_image(
         grid,
         path=Path(args.save_dir)/f"{Path(args.content_img).stem}_{Path(args.style_img).stem}.jpg",
