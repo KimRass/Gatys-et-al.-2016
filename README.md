@@ -6,7 +6,7 @@
 - [28] [Very Deep Convolutional Networks for Large-Scale Image Recognition](https://arxiv.org/pdf/1409.1556.pdf)
 ## Research
 ### Model
-- `from torchvision.models.vgg19_bn`을 사용하면 아래 이미지처럼 style transfering이 제대로 일어나지 않습니다. `from torchvision.models.vgg19`을 사용하면 제대로 된 이미지가 생성되는 것을 확인할 수 있습니다.
+- `from torchvision.models.vgg19_bn`을 사용하면 아래 이미지처럼 style transferring이 제대로 일어나지 않습니다. `from torchvision.models.vgg19`을 사용하면 제대로 된 이미지가 생성되는 것을 확인할 수 있습니다.
     - <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/b6141441-89b7-4878-b058-c112c96af038" width="300">
 - VGG19:
     - conv1_1: 0 ~ 1
@@ -26,4 +26,4 @@
     - conv5_3: 32 ~ 33
     - conv5_4: 34 ~ 36
 ### Input Image Size
-- VGG19가 224 × 224의 input size로 학습되었기 때문인지, 이와 비슷한 크기로 conetent image와 style image로 resize하지 않으면 즉 224 × 224보다 훨씬 큰 input size로 style transfering을 시도하면 제대 된 이미지가 생성되지 않음을 확인했습니다.
+- VGG19가 224 × 224의 input size로 학습되었기 때문인지, 이와 비슷한 크기로 conetent image와 style image로 resize하지 않으면 즉 224 × 224보다 훨씬 큰 input size로 style transferring을 시도하면 제대 된 이미지가 생성되지 않음을 확인했습니다.
