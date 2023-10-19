@@ -25,13 +25,7 @@
     - conv5_2: 30 ~ 31
     - conv5_3: 32 ~ 33
     - conv5_4: 34 ~ 36
-
-<!-- 
-# Implementation from Scratch
-## Samples (0.002)
-- Content image
-    - <img src="https://github.com/KimRass/image_style_transfer_from_scratch/assets/67457712/637040bd-b7c5-47e4-830d-deffa96454cc" width="600">
-- Style image
-    - <img src="https://github.com/KimRass/image_style_transfer_from_scratch/assets/67457712/dd398f2b-5215-4607-92af-bb6056f93041" width="600">
-- Generated image
-    - <img src="https://github.com/KimRass/image_style_transfer_from_scratch/assets/67457712/d28e7c7a-e02f-4907-aa2b-b11d0932b9d2" width="600"> -->
+### Normalization
+- 논문에 다음과 같은 말이 있습니다.
+    - "We normalized the network by scaling the weights such that the mean activation of each convolutional filter over images and positions is equal to one. Such re-scaling can be done for the VGG network without changing its output, because it contains only rectifying linear activation functions and no normalization or pooling over feature maps. We do not use any of the fully connected layers."
+- 그런데 이 말이 무엇을 의미하는 지 개인적으로 이해하지 못 했고, 또한 다른 분들이 구현한 코드를 보아도 이와 관련된 부분은 없는 것 같아 저도 별도로 구현하지 않았습니다.

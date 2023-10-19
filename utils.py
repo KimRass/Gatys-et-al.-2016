@@ -60,14 +60,6 @@ def denorm(tensor, mean, std):
     return tensor
 
 
-def norm_feat_map(feat_map):
-    # "We normalized the network by scaling the weights such that the mean activation of each convolutional filter
-    # over images and positions is equal to one. Such re-scaling can be done for the VGG network without changing
-    # its output, because it contains only rectifying linear activation functions and no normalization or pooling
-    # over feature maps. We do not use any of the fully connected layers."
-    return feat_map / feat_map.sum(dim=(2, 3)).unsqueeze(2).unsqueeze(2)
-
-
 class FeatMapExtractor():
     def __init__(self, model, layer_nums):
 
@@ -81,7 +73,6 @@ class FeatMapExtractor():
     def get_feat_map(self, layer_num):
         def forward_hook_fn(model, input, output):
             self.feat_maps[layer_num] = output
-            # self.feat_maps[layer_num] = norm_feat_map(output)
         return forward_hook_fn
 
     def __call__(self, image):
