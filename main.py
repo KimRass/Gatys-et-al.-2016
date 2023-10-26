@@ -98,7 +98,6 @@ def _get_contribution_of_layer(feat_map1, feat_map2):
 
     _, c, h, w = feat_map1.shape
     # "$E_{l} = \frac{1}{4N_{l}^{2}M_{l}^{2}} \sum_{i, j}\big(G^{l}_{x, ij} - G^{l}_{s, ij}\big)^{2}$"
-    # contrib = F.mse_loss(gram_mat1, gram_mat2, reduction="mean") / (4 * (c * h * w) ** 2)
     contrib = F.mse_loss(gram_mat1, gram_mat2, reduction="sum") / (4 * (c * h * w) ** 2)
     return contrib
 
