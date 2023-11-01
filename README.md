@@ -1,11 +1,10 @@
-# Gatys-et-al.
-- Gatys et al. (2016) implementation from scratch in PyTorch
+# Gatys et al. (2016) implementation from scratch in PyTorch
 - [Image Style Transfer Using Convolutional Neural Networks](https://github.com/KimRass/Gatys-et-al./blob/main/image_style_transfer_using_convolutional_neural_networks.pdf)
 ## Sample Images
-- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/688df923-1f17-4965-ba9a-33ecc0210863" width="600">
-- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/bbe8e039-5a16-4e7f-8092-1825263591ae" width="600">
-- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/298dbcb2-b888-4d9c-a7d6-81b6832c1fde" width="600">
-- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/291f3c3d-4320-4ef8-9479-a94625f238f5" width="600">
+- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/688df923-1f17-4965-ba9a-33ecc0210863" width="700">
+- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/bbe8e039-5a16-4e7f-8092-1825263591ae" width="700">
+- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/298dbcb2-b888-4d9c-a7d6-81b6832c1fde" width="700">
+- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/291f3c3d-4320-4ef8-9479-a94625f238f5" width="700">
 ## VGG19:
     - conv1_1: 0 ~ 1
     - conv1_2: 2 ~ 4
