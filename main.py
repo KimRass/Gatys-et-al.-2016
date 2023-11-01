@@ -23,7 +23,7 @@ from utils import (
     resize,
     get_white_noise,
     FeatMapExtractor,
-    images_to_grid
+    image_to_grid
 )
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     _, _, ori_h, ori_w = ori_content_image.shape
     style_image = TF.resize(style_image, size=(ori_h, ori_w), antialias=True)
     gen_image = TF.resize(gen_image, size=(ori_h, ori_w), antialias=True)
-    grid = images_to_grid(content_image=ori_content_image, style_image=style_image, gen_image=gen_image)
+    grid = image_to_grid(content_image=ori_content_image, style_image=style_image, gen_image=gen_image)
     save_image(
         grid,
         path=Path(args.save_dir)/f"{Path(args.content_img).stem}_{Path(args.style_img).stem}.jpg",

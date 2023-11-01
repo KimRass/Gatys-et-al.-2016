@@ -93,7 +93,7 @@ def resize(image, img_size):
         return image
 
 
-def images_to_grid(content_image, style_image, gen_image):
+def image_to_grid(content_image, style_image, gen_image):
     gen_image = gen_image.detach().cpu()
     image = torch.cat([content_image, style_image, gen_image], dim=0)
     image = denorm(image, mean=config.MEAN, std=config.STD)
