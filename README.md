@@ -4,9 +4,9 @@
 ```bash
 # To generate single image, e.g., run
 python3 main.py\
-    --content_img="path/to/content/image.jpg"\
-    --style_img="path/to/style/image.jpg"\
-    --save_dir="dir/to/save/generated/images"\
+    --content_img="examples/content_images/content_image1.jpg"\
+    --style_img="examples/style_images/style_image1.jpg"\
+    --save_dir="examples/"\
     --n_epochs=400 # Optional
     --alpha=1\ # Optional
     --beta=100000000 # Optional
@@ -21,23 +21,56 @@ bash generate_images.sh --data_dir="path/to/images/dir"
 - <img src="https://github.com/KimRass/PGGAN/assets/105417680/f6f7fc96-cca9-495a-a065-9c10d243400b" width="800">
 - <img src="https://github.com/KimRass/PGGAN/assets/105417680/06c8d9c9-9e20-4cae-b40a-70167aba9b84" width="800">
 - <img src="https://github.com/KimRass/PGGAN/assets/105417680/4bd17692-44ec-4f47-a040-dc671d2147ff" width="800">
-## VGG19:
-    - conv1_1: 0 ~ 1
-    - conv1_2: 2 ~ 4
-    - conv2_1: 5 ~ 6
-    - conv2_2: 7 ~ 9
-    - conv3_1: 10 ~ 11
-    - conv3_2: 12 ~ 13
-    - conv3_3: 14 ~ 15
-    - conv3_4: 16 ~ 18
-    - conv4_1: 19 ~ 20
-    - conv4_2: 21 ~ 22
-    - conv4_3: 23 ~ 24
-    - conv4_4: 25 ~ 27
-    - conv5_1: 28 ~ 29
-    - conv5_2: 30 ~ 31
-    - conv5_3: 32 ~ 33
-    - conv5_4: 34 ~ 36
+## VGG19
+```python
+from torchvision.models import vgg19
+
+print(vgg19())
+```
+```bash
+VGG(
+    (features): Sequential(
+        (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv1_1
+        (1): ReLU(inplace=True) # conv1_1
+        (2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv1_2
+        (3): ReLU(inplace=True) # conv1_2
+        (4): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False) # conv1_2
+        (5): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv2_1
+        (6): ReLU(inplace=True) # conv2_1
+        (7): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv2_2
+        (8): ReLU(inplace=True) # conv2_2
+        (9): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False) # conv2_2
+        (10): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv3_1
+        (11): ReLU(inplace=True) # conv3_1
+        (12): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv3_2
+        (13): ReLU(inplace=True) # conv3_2
+        (14): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv3_3
+        (15): ReLU(inplace=True) # conv3_3
+        (16): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv3_4
+        (17): ReLU(inplace=True) # conv3_4
+        (18): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False) # conv3_4
+        (19): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv4_1
+        (20): ReLU(inplace=True) # conv4_1
+        (21): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv4_2
+        (22): ReLU(inplace=True) # conv4_2
+        (23): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv4_3
+        (24): ReLU(inplace=True) # conv4_3
+        (25): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv4_4
+        (26): ReLU(inplace=True) # conv4_4
+        (27): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False) # conv4_4
+        (28): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv5_1
+        (29): ReLU(inplace=True) # conv5_1
+        (30): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv5_2
+        (31): ReLU(inplace=True) # conv5_2
+        (32): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv5_3
+        (33): ReLU(inplace=True) # conv5_3
+        (34): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) # conv5_4
+        (35): ReLU(inplace=True) # conv5_4
+        (36): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False) # conv5_4
+    )
+    ...
+)
+```
 ## Implementation Details
 ### Model
 - `from torchvision.models.vgg19_bn`을 사용하면 아래 이미지처럼 style transferring이 제대로 일어나지 않습니다. `from torchvision.models.vgg19`을 사용하면 제대로 된 이미지가 생성되는 것을 확인할 수 있습니다.
