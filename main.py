@@ -21,7 +21,7 @@ from utils import (
     load_image,
     save_image,
     resize,
-    get_white_noise,
+    get_noise,
     FeatMapExtractor,
     image_to_grid
 )
@@ -35,8 +35,10 @@ def get_args():
     parser.add_argument("--content_img", required=True)
     parser.add_argument("--style_img", required=True)
     parser.add_argument("--save_dir", type=str, required=True)
+    parser.add_argument("--n_epochs", type=int, required=False, default=400)
     parser.add_argument("--alpha", type=int, required=False, default=1)
     parser.add_argument("--beta", type=int, required=False, default=1e8)
+    parser.add_argument("--from_noise", action="store_true", required=False)
 
     args = parser.parse_args()
     return args
@@ -60,10 +62,10 @@ def get_images(args):
     style_image = TF.resize(style_image, size=(h, w), antialias=True)
     style_image = TF.normalize(style_image, mean=config.MEAN, std=config.STD)
 
-    if config.FROM_CONTENT_IMAGE:
-        gen_image = content_image.clone()
+    if args.from_noise:
+        gen_image = get_noise(content_image)
     else:
-        gen_image = get_white_noise(content_image)
+        gen_image = content_image.clone()
 
     ori_content_image = ori_content_image.unsqueeze(0)
     content_image = content_image.unsqueeze(0)
@@ -166,7 +168,7 @@ if __name__ == "__main__":
     if DEVICE.type == "cuda":
         scaler = GradScaler()
 
-    for epoch in tqdm(range(1, config.N_EPOCHS + 1)):
+    for epoch in tqdm(range(1, args.n_epochs + 1)):
         with torch.autocast(
             device_type=DEVICE.type,
             dtype=torch.float16 if DEVICE.type == "cuda" else torch.bfloat16,

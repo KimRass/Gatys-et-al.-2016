@@ -7,8 +7,10 @@ python3 main.py\
     --content_img="path/to/content/image.jpg"\
     --style_img="path/to/style/image.jpg"\
     --save_dir="dir/to/save/generated/images"\
+    --n_epochs=400 # Optional
     --alpha=1\ # Optional
     --beta=100000000 # Optional
+    --from_noise # 완전한 gaussian noise로부터 이미지를 생성하기 위해서는 상대적으로 매우 큰 `n_epochs` 값이 필요합니다.
 
 # To generate multiple images, e.g., run
 bash generate_images.sh --data_dir="path/to/images/dir"

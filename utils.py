@@ -45,7 +45,7 @@ def save_image(image, path):
     _to_pil(image).save(str(path), quality=100)
 
 
-def get_white_noise(content_image):
+def get_noise(content_image):
     # "We jointly minimise the distance of the feature representations of a white noise image
     # from the content representation of the photograph in one layer and the style representation
     # of the painting defined on a number of layers of the Convolutional Neural Network."
