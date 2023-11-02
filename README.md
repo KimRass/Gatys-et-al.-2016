@@ -1,10 +1,24 @@
 # Gatys et al. (2016) implementation from scratch in PyTorch
 - [Image Style Transfer Using Convolutional Neural Networks](https://github.com/KimRass/Gatys-et-al./blob/main/image_style_transfer_using_convolutional_neural_networks.pdf)
+## How to Generate Images
+```bash
+# To generate single image, e.g., run
+python3 main.py\
+    --content_img="path/to/content/image.jpg"\
+    --style_img="path/to/style/image.jpg"\
+    --save_dir="dir/to/save/generated/images"\
+    --alpha=1\ # Optional
+    --beta=100000000 # Optional
+
+# To generate multiple images, e.g., run
+bash generate_images.sh --data_dir="path/to/images/dir"
+```
 ## Sample Images
-- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/688df923-1f17-4965-ba9a-33ecc0210863" width="800">
-- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/bbe8e039-5a16-4e7f-8092-1825263591ae" width="800">
-- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/298dbcb2-b888-4d9c-a7d6-81b6832c1fde" width="800">
-- <img src="https://github.com/KimRass/Gatys-et-al./assets/67457712/291f3c3d-4320-4ef8-9479-a94625f238f5" width="800">
+- <img src="https://github.com/KimRass/PGGAN/assets/105417680/254ee5cc-0220-4e74-a0ee-635b53157703" width="800">
+- <img src="https://github.com/KimRass/PGGAN/assets/105417680/690e02d2-d762-49ac-b2ac-79df6d1e7bf1" width="800">
+- <img src="https://github.com/KimRass/PGGAN/assets/105417680/f6f7fc96-cca9-495a-a065-9c10d243400b" width="800">
+- <img src="https://github.com/KimRass/PGGAN/assets/105417680/06c8d9c9-9e20-4cae-b40a-70167aba9b84" width="800">
+- <img src="https://github.com/KimRass/PGGAN/assets/105417680/4bd17692-44ec-4f47-a040-dc671d2147ff" width="800">
 ## VGG19:
     - conv1_1: 0 ~ 1
     - conv1_2: 2 ~ 4

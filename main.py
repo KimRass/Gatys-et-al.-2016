@@ -35,7 +35,6 @@ def get_args():
     parser.add_argument("--content_img", required=True)
     parser.add_argument("--style_img", required=True)
     parser.add_argument("--save_dir", type=str, required=True)
-    # parser.add_argument("--img_size", type=int, required=True)
     parser.add_argument("--alpha", type=int, required=False, default=1)
     parser.add_argument("--beta", type=int, required=False, default=1e8)
 
