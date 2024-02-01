@@ -80,7 +80,7 @@ def get_images(args):
     return ori_content_image, content_image, style_image, gen_image
 
 
-def _get_gram_mat(feat_map):
+def get_gram_mat(feat_map):
     _, c, _, _ = feat_map.shape
     # "A layer with $N_{l}$ distinct filters has $N_{l}$ feature maps each of size $M_{l}$, where $M_{l}$ is
     # the height times the width of the feature map. So the responses in a layer $l$ can be stored in a matrix
@@ -92,10 +92,9 @@ def _get_gram_mat(feat_map):
     return gram_mat
 
 
-# "$w_{l}$"
-def _get_contribution_of_layer(feat_map1, feat_map2):
-    gram_mat1 = _get_gram_mat(feat_map1)
-    gram_mat2 = _get_gram_mat(feat_map2)
+def get_contribution_of_layer(feat_map1, feat_map2): # "$w_{l}$"
+    gram_mat1 = get_gram_mat(feat_map1)
+    gram_mat2 = get_gram_mat(feat_map2)
 
     _, c, h, w = feat_map1.shape
     # "$E_{l} = \frac{1}{4N_{l}^{2}M_{l}^{2}} \sum_{i, j}\big(G^{l}_{x, ij} - G^{l}_{s, ij}\big)^{2}$"
@@ -128,7 +127,7 @@ def get_style_loss(gen_feat_maps, style_feat_maps):
     for weight, layer_num in zip(config.STYLE_WEIGHTS, config.STYLE_LAYERS_NUMS):
         gen_feat_map = gen_feat_maps[layer_num]
         style_feat_map = style_feat_maps[layer_num].detach()
-        contrib = _get_contribution_of_layer(feat_map1=gen_feat_map, feat_map2=style_feat_map)
+        contrib = get_contribution_of_layer(feat_map1=gen_feat_map, feat_map2=style_feat_map)
         style_loss += weight * contrib
     return style_loss
 
@@ -175,7 +174,9 @@ if __name__ == "__main__":
             enabled=True if DEVICE.type == "cuda" else False,
         ):
             gen_feat_maps = exctractor(gen_image)
-            content_loss = get_content_loss(gen_feat_maps=gen_feat_maps, content_feat_maps=content_feat_maps)
+            content_loss = get_content_loss(
+                gen_feat_maps=gen_feat_maps, content_feat_maps=content_feat_maps,
+            )
             style_loss = get_style_loss(gen_feat_maps=gen_feat_maps, style_feat_maps=style_feat_maps)
             tot_loss = args.alpha * content_loss + args.beta * style_loss
 
